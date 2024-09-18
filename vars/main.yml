@@ -1,0 +1,27 @@
+    gitlab_access_token: ''
+    webmin_port: 10000
+    portainer_port: 9000
+    portainer_credentials:
+      ADMIN_USERNAME: "admin"
+      ADMIN_PASSWORD: "admin1234567890"
+
+    containers:
+      - container_name: ""
+        container_image: ""
+        container_port: ""
+        host_port: ""
+        environment_variables: {}
+
+
+    nginx_configs:
+      - domain_name: ""
+        proxy_pass_port: ""
+
+    network_name: ""
+
+
+    roles_list: 
+      - install 
+      - deploy
+
+    

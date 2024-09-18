@@ -1,0 +1,3 @@
+---
+base_directory: '/var/containers'
+webmin_port: 10000

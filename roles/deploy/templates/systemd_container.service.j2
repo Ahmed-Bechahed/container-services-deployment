@@ -1,0 +1,30 @@
+[Unit]
+Description=container Service
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+RestartSec=20
+ExecStartPre=-/usr/bin/docker stop -t 10 {{ item.container_name }}-{{ branch_name }}
+ExecStartPre=-/usr/bin/docker rm {{ item.container_name }}-{{ branch_name }}
+ExecStartPre=/usr/bin/docker pull {{ item.container_image }}
+
+ExecStart=/usr/bin/docker run --rm --name {{ item.container_name }}-{{ branch_name }} \
+    --net {{ network_name }}-{{ branch_name }} \
+    -v {{base_directory}}/{{ item.container_name }}-{{ branch_name }}/volumes:/opt/{{ item.container_name }}-{{ branch_name }}/data \
+    -v {{base_directory}}/{{ item.container_name }}-{{ branch_name }}/config:/opt/{{ item.container_name }}-{{ branch_name }}/conf \
+    -v {{base_directory}}/{{ item.container_name }}-{{ branch_name }}/logs:/opt/{{ item.container_name }}-{{ branch_name }}/logs \
+    -v {{base_directory}}/{{ item.container_name }}-{{ branch_name }}/backups:/opt/{{ item.container_name }}-{{ branch_name }}/backups \
+    -p {{ item.host_port }}:{{ item.container_port }} \
+    {% if item.environment_variables is defined and item.environment_variables %}
+    {% for env_var, value in item.environment_variables.items() %}
+    -e {{ env_var }}={{ value }} \
+    {% endfor %}
+    {% endif %}
+    {{ item.container_image }}
+
+
+[Install]
+WantedBy=default.target

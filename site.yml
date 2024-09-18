@@ -1,0 +1,11 @@
+- name: Setup server and deploy apps
+  hosts: all
+  become: true
+  vars_files:
+    - vars/main.yml
+
+  tasks: 
+    - name: Include roles dynamically
+      include_role:
+        name: "{{ item }}"
+      loop: "{{ roles_list }}"

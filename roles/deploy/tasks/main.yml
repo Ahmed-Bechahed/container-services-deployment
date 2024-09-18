@@ -1,0 +1,79 @@
+#check docker existence 
+- name: Check if Docker is installed
+  command: docker --version
+  register: docker_check
+  ignore_errors: true
+  tags:
+    - docker
+    
+#Install docker if not exists 
+- name: Install Docker if not already installed
+  include_role:
+    name: install
+    tasks_from: install_docker   
+  when: docker_check.rc != 0
+  tags:
+    - docker
+
+#Deoply webmin
+- name: Deploy webmin
+  template:
+    src: "miniserv.conf.j2"
+    dest: "/etc/webmin/miniserv.conf"
+    mode: "0644"
+  notify:
+    - Reload webmin
+  tags:
+    - webmin
+
+# Deploy nginx
+- name: Deploy custom Nginx configuration files
+  template:
+    src: "nginx_config.conf.j2"
+    dest: "/etc/nginx/conf.d/{{ item.domain_name }}.conf"
+    owner: "root"
+    group: "root"
+    mode: 0644
+  loop: "{{ nginx_configs }}"
+  when: nginx_configs is defined and nginx_configs | length > 0
+  notify:
+    - Reload Nginx
+  become: true
+  tags:
+    - nginx
+
+
+# newtork verification
+- name: Ensure the Docker network exists
+  docker_network:
+    name: "{{ network_name }}-{{ branch_name }}"
+    state: present
+  tags:
+    - docker
+
+# Prepare logs/configs/backups folders
+- name: create base, container, and subdirectories for container volumes, logs, config, backups
+  file:
+    path: "{{ base_directory }}/{{ item.0.container_name }}/{{ item.1 }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ lookup('nested', containers, ['volumes', 'logs', 'config', 'backups']) }}"
+  tags:
+    - docker
+
+
+
+# Deploy containers
+- name: Deploy systemd service file for Docker container
+  template:
+    src: "systemd_container.service.j2"
+    dest: "/etc/systemd/system/{{ item.container_name }}-{{ branch_name }}.service"
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Enable and start service 
+  with_items: "{{ containers }}"
+  tags:
+    - docker
+
+

@@ -1,0 +1,22 @@
+---
+# handlers file for deploy
+- name: Reload Nginx
+  service:
+    name: nginx
+    state: reloaded
+    
+- name: Reload webmin
+  service:
+    name: webmin
+    state: reloaded
+
+- name: Reload systemd 
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start service
+  systemd:
+    name: "{{ item.container_name }}-{{ branch_name }}"
+    enabled: yes
+    state: restarted
+  loop: "{{ containers }}"

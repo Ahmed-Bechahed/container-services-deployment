@@ -1,0 +1,101 @@
+---
+- name: Install docker 
+  include_tasks: install_docker.yml
+  tags:
+    - docker
+
+# Installing pre-requisites
+- name: Ensure pip3 is installed
+  apt:
+    name: python3-pip
+    state: present
+  tags:
+    - docker
+    - portainer
+    
+
+- name: install docker-py
+  pip:
+    name: docker-py
+    state: present
+  tags:
+    - docker
+    - portainer
+
+- name: Install python-apt
+  apt:
+    name: python3-apt
+    state: present
+  tags:
+    - webmin
+
+# Deploy Portainer
+- name: Install Portainer Docker container
+  docker_container:
+    name: portainer
+    image: portainer/portainer
+    ports:
+      - "{{ portainer_port }}:9000"
+    volumes:
+      - portainer_data:/data
+    restart_policy: always
+    env:
+      ADMIN_USERNAME: "{{ portainer_credentials.ADMIN_USERNAME }}"
+      ADMIN_PASSWORD: "{{ portainer_credentials.ADMIN_PASSWORD }}" 
+  become: true
+  tags:
+    - portainer
+
+  
+# Installing nginx
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+  become: true
+  tags:
+    - nginx
+
+# Installing webmin
+- name: Install prerequisites
+  apt:
+    name:
+      - perl 
+      - libnet-ssleay-perl 
+      - openssl 
+      - libauthen-pam-perl
+      - libpam-runtime
+      - libio-pty-perl
+      - apt-show-versions
+      - python3
+      - libwww-perl
+      - liblwp-protocol-https-perl
+    state: latest
+    # update_cache: yes
+  tags:
+    - webmin
+
+- name: Add key for Webmin repository
+  apt_key:
+    url: https://www.webmin.com/jcameron-key.asc
+    state: present
+  tags:
+    - webmin
+
+- name: Add Webmin repository
+  apt_repository:
+    repo: 'deb https://download.webmin.com/download/repository sarge contrib'
+    state: present
+    filename: webmin
+    update_cache: yes
+  tags:
+    - webmin
+
+- name: Install/Update Webmin
+  apt:
+    name: 
+      - webmin
+    state: latest
+  register: webmin_check
+  tags:
+    - webmin
