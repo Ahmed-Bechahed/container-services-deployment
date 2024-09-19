@@ -154,7 +154,7 @@ The variables file `Ansible_roles/vars/main.yml` defines key parameters and sett
   **Example:**
   ```yaml
    nginx_configs:
-      - domain_name: "project.Astrolab.com"
+      - domain_name: "project.com"
         proxy_pass_port: 9000
   ```
 
